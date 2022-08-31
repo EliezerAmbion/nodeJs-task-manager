@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // only argument in .Schema method is the object model
 const userSchema = new mongoose.Schema({
@@ -41,7 +42,26 @@ const userSchema = new mongoose.Schema({
       }
     },
   },
+  tokens: [
+    {
+      token: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 });
+
+// to generate a token
+userSchema.methods.generateAuthToken = async function () {
+  const user = this;
+  const token = jwt.sign({ _id: user._id.toString() }, 'thisismynewcourse');
+
+  user.tokens = user.tokens.concat({ token });
+  await user.save();
+
+  return token;
+};
 
 // user authentication to check email and password
 userSchema.statics.findByCredentials = async (email, password) => {
