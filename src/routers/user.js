@@ -23,12 +23,34 @@ router.post('/users/login', async (req, res) => {
       req.body.password
     );
 
-    // user instance was used here. i.e lowercase user not User
     const token = await user.generateAuthToken();
 
     res.send({ user, token });
   } catch (err) {
     res.status(400).send(err);
+  }
+});
+
+router.post('/users/logout', auth, async (req, res) => {
+  try {
+    req.user.tokens = req.user.tokens.filter((token) => {
+      return token.token !== req.token;
+    });
+    await req.user.save();
+
+    res.send('Logged out');
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+router.post('/users/logoutAll', auth, async (req, res) => {
+  try {
+    req.user.tokens = [];
+    await req.user.save();
+    res.send('Logged out to all devices.');
+  } catch (err) {
+    res.status(500).send(err);
   }
 });
 
