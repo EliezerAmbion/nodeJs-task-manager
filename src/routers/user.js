@@ -4,12 +4,17 @@ const User = require('../models/user');
 const auth = require('../middleware/auth');
 const multer = require('multer');
 const sharp = require('sharp');
+const {
+  sendCancellationEmail,
+  sendWelcomeEmail,
+} = require('../emails/account');
 
 router.post('/users', async (req, res) => {
   const user = new User(req.body);
 
   try {
     await user.save();
+    sendWelcomeEmail(user.email, user.name); // no need to user await here cuz this is just sending an email
     const token = await user.generateAuthToken();
 
     res.status(201).send({ user, token });
@@ -86,6 +91,7 @@ router.delete('/users/me', auth, async (req, res) => {
   try {
     await req.user.remove();
 
+    sendCancellationEmail(req.user.email, req.user.name);
     res.send(req.user);
   } catch (err) {
     res.status(500).send(err);
